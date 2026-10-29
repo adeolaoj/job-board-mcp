@@ -18,6 +18,24 @@ GET https://boards-api.greenhouse.io/v1/boards/addepar1/jobs?content=true
 ### Greenhouse: job detail (Addepar)
 # Verified 2026-10-29: identical to the same job's entry in the content=true list.
 # get_job uses this endpoint, so searches don't download every description.
-# One job (internal_job_id) can have several posts (id), e.g. one per location,
-# each with its own description. We track posts, since you apply to a specific one.
+# A Greenhouse job (internal_job_id) can have several posts (id). The SLC and Edinburgh
+# AddeGrad posts share a title but are separate jobs. We track posts by id.
 GET https://boards-api.greenhouse.io/v1/boards/addepar1/jobs/8756273002
+
+### Lever: job list (Zoox, used as a test case only)
+# Verified 2026-10-29: 200 OK, bare JSON list (no wrapper object), 229 postings.
+# Fields used: id (UUID string), text (title), categories.allLocations, hostedUrl,
+# createdAt (milliseconds since 1970, UTC), workplaceType ("onsite" and "hybrid" seen;
+# docs say "on-site"). Descriptions are always included; there's no switch to turn them off.
+GET https://api.lever.co/v0/postings/zoox?mode=json
+
+### Lever: pagination check
+# Verified 2026-10-29: returns [], so the request above already returns every posting.
+GET https://api.lever.co/v0/postings/zoox?mode=json&skip=229&limit=10
+
+### Lever: job detail (Zoox)
+# Verified 2026-10-29: same data as the list item. "<" arrives as \u003C (JSON escaping,
+# undone by the JSON parser), unlike Greenhouse's &lt; (HTML escaping, undone by us).
+# descriptionPlain is only the intro; responsibilities and qualifications are in
+# lists[].content, which is HTML only.
+GET https://api.lever.co/v0/postings/zoox/0a22d356-f7f7-4374-b393-55637772edda?mode=json

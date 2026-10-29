@@ -33,7 +33,31 @@ Solutions Analyst" is listed in Salt Lake City and Edinburgh as two separate job
 (different `internal_job_id`s) with different descriptions: US pay range and work
 authorization vs UK right-to-work text. We track each post by its `id`, show both in
 search results, and save each as its own Notion row, since you apply to a specific one.
-I
+
+## Lever field mapping
+
+Verified against Zoox (a test case, not a target company). Unlike Greenhouse, the
+response is a bare list, and every posting includes its full description.
+
+| Normalized field | Lever field | Why |
+|---|---|---|
+| `job_id` | `id` | A UUID string. Greenhouse IDs are integers, so `job_id` is always a string. |
+| `title` | `text` | |
+| `location` | `categories.allLocations`, joined with `; ` | One Lever posting can list several cities, where Greenhouse (at Addepar) used separate posts. Joining them lets a location search match any city. |
+| `remote` | `workplaceType` | `remote` → true, `onsite`/`hybrid` → false, anything else → null. Compared after lowercasing and removing hyphens, because the docs say `on-site` but the data says `onsite`. |
+| `url` | `hostedUrl` | `applyUrl` is the same page plus `/apply`. |
+| `posted_at` | `createdAt` | Milliseconds since 1970, in UTC. Greenhouse gives local time with an offset, so both are converted the same way. |
+
+**No pagination needed.** `skip` and `limit` are optional; one request returned all
+229 postings, and `skip=229` returned an empty list.
+
+**Escaping differs from Greenhouse.** Lever's `\u003C` is JSON escaping, undone by the
+JSON parser. Greenhouse's `&lt;` is HTML escaping inside the string, which we undo ourselves.
+
+**`descriptionPlain` is incomplete.** Responsibilities and qualifications are in
+`lists[].content` as HTML only, so `get_job` combines `descriptionPlain`, each list
+(heading plus text with tags removed), and `additionalPlain`.
+
 ## Tools
 
 **`search_jobs` doesn't fetch descriptions; `get_job` calls the detail endpoint.**
@@ -45,29 +69,39 @@ the same data for one job, and `get_job` works on its own without a prior search
 text (`&lt;p&gt;`), with some entities escaped twice (`&amp;amp;`). Plain text requires:
 unescape, strip tags, unescape again.
 
+**`get_job` calls the detail endpoint for every ATS,** even though Lever's list already
+includes descriptions. Keeping the same flow for every source was chosen over saving
+one request.
+
 ## Lanes
 
 **Three lanes: `deployment`, `pm`, `new_grad`.** Real data showed the original keyword
-lists miss roles like "AddeGrad Program (2027) - Client Solutions Analyst".
+lists missed relevant roles: "AddeGrad Program (2027) - Client Solutions Analyst" matched
+no lane, and "Product Manager - Early Career, AI Platform" missed `pm` because plain
+"product manager" wasn't a keyword. Added: `product manager` (pm), `applied ai` and
+`customer facing` (deployment).
 
 **A job can match several lanes, so output uses `lanes` (a list).** The Notion `Lane`
 property is multi-select, and `save_job_to_notion` takes a list of lanes.
 
-**Matching uses whole words and ignores case, on titles only.** Substring matching
-caused false matches: "grad" in "Upgrade", "staff" in "Staffing", "intern" in
-"International". Tradeoff: whole words are stricter, so "grad program" no longer matches
-"AddeGrad Program". Years in `new_grad` (e.g. `2027`) need updating each hiring season.
+**Matching splits titles into words.** The title and each keyword are lowercased and
+split into words (letters and digits only, dropping punctuation), and a keyword matches
+if its words appear in order in the title. This replaced two approaches that failed on
+real titles:
+- Substring matching: "grad" matched "Upgrade", "staff" matched "Staffing", "intern"
+  matched "International".
+- Regex word boundaries: `\bsr\.\b` can't match "Sr. Account", because there's no
+  boundary between "." and the following space.
+
+Splitting on punctuation also handles "Staff/Principal" (two words) and keywords next
+to commas or dashes. Tradeoff: "grad program" no longer matches "AddeGrad Program";
+`2027` catches that one.
 
 **`program` is not a `new_grad` keyword.** It would tag every "Technical Program Manager".
 
+**Years in `new_grad` (e.g. `2027`) need updating each hiring season.**
+
 **`intern` is excluded.** Internships aren't a target.
-
-## Error handling
-
-**A malformed job (e.g. no title) is skipped, not fatal.** The tool response includes a
-`warnings` list so the skip is visible in conversation, and it's also logged to stderr
-(stdout is reserved for the MCP protocol). Company-level failures go in an `errors` list,
-and results from other companies still return.
 
 ## Testing
 
