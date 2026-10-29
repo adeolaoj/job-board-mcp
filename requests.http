@@ -39,3 +39,25 @@ GET https://api.lever.co/v0/postings/zoox?mode=json&skip=229&limit=10
 # descriptionPlain is only the intro; responsibilities and qualifications are in
 # lists[].content, which is HTML only.
 GET https://api.lever.co/v0/postings/zoox/0a22d356-f7f7-4374-b393-55637772edda?mode=json
+### Ashby: job list (Deepgram)
+# Verified 2026-10-29: 200 OK, {"jobs": [...], "apiVersion": "1"}, 80 postings, ~1.4 MB.
+# Fields used: id (UUID string), title, location + secondaryLocations[].location, jobUrl,
+# publishedAt (ISO, UTC), workplaceType ("Remote"/"OnSite"/"Hybrid"/null) with isRemote
+# as fallback. descriptionPlain is complete and the HTML isn't escaped.
+# No public detail endpoint: /posting-api/job-board/deepgram/{id} returns 401.
+GET https://api.ashbyhq.com/posting-api/job-board/deepgram
+
+### Ashby: job list with compensation (Deepgram)
+# Verified 2026-10-29: adds a "compensation" object per posting. Not used.
+GET https://api.ashbyhq.com/posting-api/job-board/deepgram?includeCompensation=true
+
+### Wrong slug, one per ATS
+# Verified 2026-10-29: all return 404. Greenhouse and Lever send a JSON body;
+# Ashby sends plain text "Not Found", so check the status before parsing JSON.
+GET https://boards-api.greenhouse.io/v1/boards/not-a-real-board-xyz/jobs
+
+###
+GET https://api.lever.co/v0/postings/not-a-real-board-xyz?mode=json
+
+###
+GET https://api.ashbyhq.com/posting-api/job-board/not-a-real-board-xyz

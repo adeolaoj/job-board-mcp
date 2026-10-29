@@ -5,7 +5,7 @@ based on a real API response, not documentation alone.
 
 ## Data sources
 
-**Official public job board APIs.** Greenhouse, Lever, and Ashbypublish unauthenticated job board endpoints meant to be read. Request volume is kept
+**Official public job board APIs.** Greenhouse, Lever, and Ashby publish unauthenticated job board endpoints meant to be read. Request volume is kept
  low with a ~15 minute cache.
  **Company slugs must be checked, not guessed.**
 
@@ -22,7 +22,7 @@ based on a real API response, not documentation alone.
 **`updated_at` is ignored.** It changes whenever a recruiter edits anything, so sorting
 by it would make old jobs look new. A job appearing in the response already means it's open.
 
-**Compcny-specific metadata is ignored.** Addepar's "Job Board Function" field
+**Company-specific metadata is ignored.** Addepar's "Job Board Function" field
 (e.g. "Interns & New Grads") is a custom field. Other companies won't have it, so it
 can't be part of a normalized format shared across sources.
 
@@ -58,6 +58,49 @@ JSON parser. Greenhouse's `&lt;` is HTML escaping inside the string, which we un
 `lists[].content` as HTML only, so `get_job` combines `descriptionPlain`, each list
 (heading plus text with tags removed), and `additionalPlain`.
 
+## Ashby field mapping
+
+Verified against Deepgram on 2026-10-29: 200 OK, `{"jobs": [...], "apiVersion": "1"}`,
+80 postings, every posting includes its full description (~1.4 MB total).
+
+| Normalized field | Ashby field | Why |
+|---|---|---|
+| `job_id` | `id` | A UUID string, like Lever. |
+| `title` | `title` | |
+| `location` | `location` plus `secondaryLocations[].location`, joined with `; ` | Same idea as Lever's `allLocations`. 14 of 80 Deepgram postings have secondary locations. |
+| `remote` | `workplaceType`, falling back to `isRemote` | `Remote` → true, `OnSite`/`Hybrid` → false, same rule as Lever. If `workplaceType` is null (5 of 80), use `isRemote`; if both are null, `remote` is null. `workplaceType` wins when they disagree: "Executive Coordinator" is `Hybrid` but `isRemote: true`. |
+| `url` | `jobUrl` | `applyUrl` is the same page plus `/application`. |
+| `posted_at` | `publishedAt` | ISO string in UTC with milliseconds (`2026-10-10T23:22:04.170+00:00`). Present on all 80. |
+
+**No public detail endpoint.** `/posting-api/job-board/{org}/{id}` returns 401, so it's
+not public, and `developers.ashbyhq.com` couldn't be reached to check for another. Ashby's
+`get_job` reads the posting from the cached list instead. This is the one exception to
+"`get_job` calls the detail endpoint for every ATS", forced by the API.
+
+**`descriptionPlain` is complete.** Unlike Lever, it has the same content as
+`descriptionHtml` (1,757 vs 1,719 words on one posting), and the HTML isn't escaped.
+`get_job` uses it directly.
+
+**`isListed` was true on all 80 postings.** Postings with `isListed: false` are skipped
+in case another company returns unlisted ones.
+
+**`?includeCompensation=true` exists** and adds a `compensation` object. Not used, since
+salary isn't in the normalized format.
+
+## Wrong slugs
+
+Each ATS answers a wrong slug with a 404, in a different format. Any 404 means
+"check this company's slug in `companies.yaml`", reported in the `errors` list.
+
+| ATS | Status | Body |
+|---|---|---|
+| Greenhouse | 404 | `{"status":404,"error":"Job not found"}` (JSON) |
+| Lever | 404 | `{"ok":false,"error":"Document not found"}` (JSON) |
+| Ashby | 404 | `Not Found` (plain text, not JSON) |
+
+Ashby's plain-text body means error handling must check the status code before trying
+to parse JSON.
+
 ## Tools
 
 **`search_jobs` doesn't fetch descriptions; `get_job` calls the detail endpoint.**
@@ -69,9 +112,9 @@ the same data for one job, and `get_job` works on its own without a prior search
 text (`&lt;p&gt;`), with some entities escaped twice (`&amp;amp;`). Plain text requires:
 unescape, strip tags, unescape again.
 
-**`get_job` calls the detail endpoint for every ATS,** even though Lever's list already
-includes descriptions. Keeping the same flow for every source was chosen over saving
-one request.
+**`get_job` calls the detail endpoint for every ATS that has one,** even though Lever's
+list already includes descriptions. Keeping the same flow for every source was chosen
+over saving one request. Ashby has no public detail endpoint, so it reads from the cached list.
 
 ## Lanes
 
@@ -103,7 +146,28 @@ to commas or dashes. Tradeoff: "grad program" no longer matches "AddeGrad Progra
 
 **`intern` is excluded.** Internships aren't a target.
 
+**Contract roles are kept.** No `contract` exclude keyword.
+
+**A keyword's words must be next to each other, in order.** "customer engineer" does
+not match "Customer Success Engineer"; otherwise multi-word keywords would match words
+scattered across a long title.
+
+**Known gaps, found in Deepgram data (open):**
+- "Research Staff, Voice AI Foundations" is excluded by `staff`, but "Research Staff"
+  there is a job family, not a seniority level.
+- "Customer Success Engineer (Scaled)" matches no lane. Possibly a deployment role.
+
 ## Testing
 
 **Fixtures are a few real entries from a real response, unedited.** Picked on purpose
 to include edge cases. Raw exploration downloads live in `test-files/` and are gitignored.
+
+| Fixture | Source | Entries |
+|---|---|---|
+| `greenhouse_jobs.json` | Addepar list | 5: same-title separate jobs (SLC, Edinburgh), early-career PM, Applied AI engineer, `Sr.` title with "Remote, USA" |
+| `greenhouse_job_detail.json` | Addepar detail | Double-escaped HTML `content` |
+| `lever_jobs.json` | Zoox list | 4: `onsite`, `hybrid`, a TPM matching `pm`, a 3-city `Staff/Principal` posting |
+| `lever_job_detail.json` | Zoox detail | `lists[]` HTML that `descriptionPlain` leaves out |
+| `ashby_jobs.json` | Deepgram list | 5: `forward-deployed` hyphen match (OnSite), `Senior` FDE with null `workplaceType` and `isRemote`, `Hybrid` vs `isRemote: true` conflict, "Research Staff" with 2 secondary locations, "Customer Success Engineer" with no lane |
+
+Ashby has no detail fixture because it has no public detail endpoint.
