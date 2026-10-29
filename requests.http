@@ -10,5 +10,14 @@
 GET https://boards-api.greenhouse.io/v1/boards/addepar1/jobs
 
 ### Greenhouse: job list with descriptions (Addepar)
-# Adds a "content" field per job. Compare the response size with the request above.
+# Verified 2026-10-29: same 114 jobs, plus content, departments, and offices per job.
+# content is HTML stored as escaped text (&lt;p&gt;), and some entities are escaped
+# twice (&amp;amp;). Unescape, strip tags, then unescape again to get plain text.
 GET https://boards-api.greenhouse.io/v1/boards/addepar1/jobs?content=true
+
+### Greenhouse: job detail (Addepar)
+# Verified 2026-10-29: identical to the same job's entry in the content=true list.
+# get_job uses this endpoint, so searches don't download every description.
+# One job (internal_job_id) can have several posts (id), e.g. one per location,
+# each with its own description. We track posts, since you apply to a specific one.
+GET https://boards-api.greenhouse.io/v1/boards/addepar1/jobs/8756273002
