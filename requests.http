@@ -1,0 +1,14 @@
+# Verified job board API requests.
+# Run with the VS Code "REST Client" extension (humao.rest-client): click "Send Request".
+# Each entry notes when it was checked and what we learned from the real response.
+
+### Greenhouse: job list (Addepar)
+# Verified 2026-10-29: 200 OK, 114 jobs.
+# Board token is "addepar1", not "addepar". Always confirm the token from a job URL.
+# Fields used: id (posting id, appears in absolute_url), title, location.name,
+# absolute_url, first_published (posted date). updated_at changes on any edit, so we ignore it.
+GET https://boards-api.greenhouse.io/v1/boards/addepar1/jobs
+
+### Greenhouse: job list with descriptions (Addepar)
+# Adds a "content" field per job. Compare the response size with the request above.
+GET https://boards-api.greenhouse.io/v1/boards/addepar1/jobs?content=true
