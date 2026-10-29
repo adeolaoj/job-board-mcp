@@ -219,5 +219,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Other Stuff
+# Local API exploration (raw responses, not fixtures)
 test-files/

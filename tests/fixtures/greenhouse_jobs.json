@@ -1,0 +1,174 @@
+{
+  "jobs": [
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/addepar1/jobs/8815241002",
+      "data_compliance": [
+        {
+          "type": "gdpr",
+          "requires_consent": false,
+          "requires_processing_consent": false,
+          "requires_retention_consent": false,
+          "retention_period": null,
+          "demographic_data_consent_applies": false
+        }
+      ],
+      "education": "education_required",
+      "internal_job_id": 6502476002,
+      "location": {
+        "name": "Salt Lake City, UT"
+      },
+      "metadata": [
+        {
+          "id": 14664582002,
+          "name": "Job Board Function",
+          "value": "Interns & New Grads",
+          "value_type": "single_select"
+        }
+      ],
+      "id": 8815241002,
+      "updated_at": "2026-10-07T11:24:59-04:00",
+      "requisition_id": "1070-Pipeline",
+      "title": "AddeGrad Program (2027) - Client Solutions Analyst",
+      "company_name": "Addepar",
+      "first_published": "2026-09-16T15:27:34-04:00",
+      "language": "en",
+      "application_deadline": null
+    },
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/addepar1/jobs/8756273002",
+      "data_compliance": [
+        {
+          "type": "gdpr",
+          "requires_consent": false,
+          "requires_processing_consent": false,
+          "requires_retention_consent": false,
+          "retention_period": null,
+          "demographic_data_consent_applies": false
+        }
+      ],
+      "education": "education_required",
+      "internal_job_id": 6502439002,
+      "location": {
+        "name": "Edinburgh, UK"
+      },
+      "metadata": [
+        {
+          "id": 14664582002,
+          "name": "Job Board Function",
+          "value": "Interns & New Grads",
+          "value_type": "single_select"
+        }
+      ],
+      "id": 8756273002,
+      "updated_at": "2026-10-07T11:24:59-04:00",
+      "requisition_id": "1069-Pipeline",
+      "title": "AddeGrad Program (2027) - Client Solutions Analyst",
+      "company_name": "Addepar",
+      "first_published": "2026-10-01T12:50:41-04:00",
+      "language": "en",
+      "application_deadline": null
+    },
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/addepar1/jobs/8910404002",
+      "data_compliance": [
+        {
+          "type": "gdpr",
+          "requires_consent": false,
+          "requires_processing_consent": false,
+          "requires_retention_consent": false,
+          "retention_period": null,
+          "demographic_data_consent_applies": false
+        }
+      ],
+      "internal_job_id": 6569624002,
+      "location": {
+        "name": "New York, NY"
+      },
+      "metadata": [
+        {
+          "id": 14664582002,
+          "name": "Job Board Function",
+          "value": "Product",
+          "value_type": "single_select"
+        }
+      ],
+      "id": 8910404002,
+      "updated_at": "2026-10-28T19:47:16-04:00",
+      "requisition_id": "R-102599",
+      "title": "Product Manager - Early Career, AI Platform",
+      "company_name": "Addepar",
+      "first_published": "2026-10-23T09:43:19-04:00",
+      "language": "en",
+      "application_deadline": null
+    },
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/addepar1/jobs/8879315002",
+      "data_compliance": [
+        {
+          "type": "gdpr",
+          "requires_consent": false,
+          "requires_processing_consent": false,
+          "requires_retention_consent": false,
+          "retention_period": null,
+          "demographic_data_consent_applies": false
+        }
+      ],
+      "internal_job_id": 6555742002,
+      "location": {
+        "name": "London, UK"
+      },
+      "metadata": [
+        {
+          "id": 14664582002,
+          "name": "Job Board Function",
+          "value": "Engineering",
+          "value_type": "single_select"
+        }
+      ],
+      "id": 8879315002,
+      "updated_at": "2026-10-09T10:40:38-04:00",
+      "requisition_id": "R-102530",
+      "title": "Software Engineer - Customer Facing Applied AI",
+      "company_name": "Addepar",
+      "first_published": "2026-10-09T10:40:38-04:00",
+      "language": "en",
+      "application_deadline": null
+    },
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/addepar1/jobs/8515897002",
+      "data_compliance": [
+        {
+          "type": "gdpr",
+          "requires_consent": false,
+          "requires_processing_consent": false,
+          "requires_retention_consent": false,
+          "retention_period": null,
+          "demographic_data_consent_applies": false
+        }
+      ],
+      "internal_job_id": 6401694002,
+      "location": {
+        "name": "Remote, USA"
+      },
+      "metadata": [
+        {
+          "id": 14664582002,
+          "name": "Job Board Function",
+          "value": "Sales",
+          "value_type": "single_select"
+        }
+      ],
+      "id": 8515897002,
+      "updated_at": "2026-10-21T17:01:58-04:00",
+      "requisition_id": "R-102032",
+      "title": "Sr. Account Executive - Enterprise",
+      "company_name": "Addepar",
+      "first_published": "2026-04-29T09:57:34-04:00",
+      "language": "en",
+      "application_deadline": null
+    }
+  ],
+  "meta": {
+    "total": 114
+  }
+}
