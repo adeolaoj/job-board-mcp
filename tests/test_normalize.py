@@ -73,7 +73,7 @@ def test_greenhouse_skips_job_without_id(greenhouse_raw):
 
     assert len(jobs) == 4
     assert len(warnings) == 1
-    assert "8815241002" in warnings[0]  # the warning names the skipped job
+    assert "AddeGrad Program (2027) - Client Solutions Analyst" in warnings[0]
 
 
 def test_greenhouse_skips_job_without_url(greenhouse_raw):
@@ -88,12 +88,22 @@ def test_greenhouse_skips_job_without_url(greenhouse_raw):
 
 
 def test_greenhouse_continues_without_location(greenhouse_raw):
-    greenhouse_raw["jobs"][0]["location"] = {}
+    greenhouse_raw["jobs"][0]["location"] = None
 
     jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
 
     assert len(jobs) == 5
-    assert len(warnings) == 0
+    assert warnings == []
+
+
+def test_greenhouse_skips_job_without_date(greenhouse_raw):
+    greenhouse_raw["jobs"][0].pop("first_published")
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert len(jobs) == 4
+    assert len(warnings) == 1
+    assert "8815241002" in warnings[0]
 
 
 def test_greenhouse_skips_job_with_broken_date(greenhouse_raw):
@@ -124,7 +134,7 @@ def test_ashby_maps_fields(ashby_raw):
     assert jobs[0] == Job(
         company="Deepgram",
         title="Research Staff, Voice AI Foundations",
-        location="USA - Remote",
+        location="USA - Remote; San Francisco, CA; Ann Arbor, Michigan",
         remote=True,
         url="https://jobs.ashbyhq.com/deepgram/7cf277bc-a192-4007-a77a-fafbf8276a5e",
         posted_at=datetime(2026, 8, 23, 17, 43, 40, 888000, tzinfo=timezone.utc),
@@ -144,13 +154,22 @@ def test_ashby_job_id_is_string(ashby_raw):
     assert all(isinstance(job.job_id, str) for job in jobs)
 
 
-def test_ashby_remote_uses_is_remote(ashby_raw):
+def test_ashby_remote_prefers_workplace_type_to_is_remote(ashby_raw):
     jobs, _ = normalize_ashby(ashby_raw, "Deepgram")
     remote_by_title = {job.title: job.remote for job in jobs}
 
     assert remote_by_title["Research Staff, Voice AI Foundations"] is True
     assert remote_by_title["Forward-Deployed Engineer (FDE), Strategic Accounts"] is False
     assert remote_by_title["Senior Forward-Deployed Engineer, Federal"] is None
+    assert remote_by_title["Executive Coordinator"] is False
+
+
+def test_ashby_remote_falls_back_to_is_remote_when_workplace_type_is_missing(ashby_raw):
+    ashby_raw["jobs"][0]["workplaceType"] = None
+
+    jobs, _ = normalize_ashby(ashby_raw, "Deepgram")
+
+    assert jobs[0].remote is True
 
 
 def test_ashby_skips_job_without_title(ashby_raw):
@@ -239,12 +258,22 @@ def test_lever_job_id_is_string(lever_raw):
 
 def test_lever_remote_uses_workplace_type(lever_raw):
     lever_raw[0]["workplaceType"] = "remote"
+    lever_raw[1]["workplaceType"] = "on-site"
 
     jobs, _ = normalize_lever(lever_raw, "Zoox")
     remote_by_title = {job.title: job.remote for job in jobs}
 
     assert remote_by_title["Director, Corporate Security"] is True
-    assert remote_by_title["Director, Go-To-Market Strategy"] is None
+    assert remote_by_title["Director, Go-To-Market Strategy"] is False
+
+
+def test_lever_joins_all_locations(lever_raw):
+    jobs, _ = normalize_lever(lever_raw, "Zoox")
+    job_by_id = {job.job_id: job for job in jobs}
+
+    assert job_by_id["a30574c9-8ef3-408f-bc85-39aad54ad115"].location == (
+        "Foster City, CA; Seattle, WA; Boston, MA"
+    )
 
 
 def test_lever_skips_job_without_title(lever_raw):
@@ -278,7 +307,7 @@ def test_lever_skips_job_without_url(lever_raw):
 
 
 def test_lever_continues_without_location(lever_raw):
-    lever_raw[0]["categories"]["location"] = ""
+    lever_raw[0]["categories"]["allLocations"] = None
 
     jobs, warnings = normalize_lever(lever_raw, "Zoox")
 

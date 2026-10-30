@@ -56,4 +56,13 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
         jobs.append(normalized_job)
 
     return jobs, warnings
-        
+
+
+def normalize_ashby(raw: dict, company: str) -> tuple[list[Job], list[str]]:
+    """Normalize Ashby jobs into the shared Job format."""
+    raise NotImplementedError("Ashby normalization is not implemented yet")
+
+
+def normalize_lever(raw: dict, company: str) -> tuple[list[Job], list[str]]:
+    """Normalize Lever jobs into the shared Job format."""
+    raise NotImplementedError("Lever normalization is not implemented yet")
