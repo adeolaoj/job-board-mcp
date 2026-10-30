@@ -82,7 +82,8 @@ not public, and `developers.ashbyhq.com` couldn't be reached to check for anothe
 `get_job` uses it directly.
 
 **`isListed` was true on all 80 postings.** Postings with `isListed: false` are skipped
-in case another company returns unlisted ones.
+silently, in case another company returns unlisted ones. No warning: an unlisted job
+isn't broken data, it's hidden on purpose, so its title shouldn't appear in results.
 
 **`?includeCompensation=true` exists** and adds a `compensation` object. Not used, since
 salary isn't in the normalized format.
@@ -115,6 +116,67 @@ unescape, strip tags, unescape again.
 **`get_job` calls the detail endpoint for every ATS that has one,** even though Lever's
 list already includes descriptions. Keeping the same flow for every source was chosen
 over saving one request. Ashby has no public detail endpoint, so it reads from the cached list.
+
+## Error handling
+
+**A malformed job is skipped, not fatal.** A job needs an id, a title, a URL, and a
+valid posted date; otherwise it's skipped and a warning is added. The tool response
+includes a `warnings` list so skips are visible in conversation, and they're also logged
+to stderr (stdout is reserved for the MCP protocol).
+
+**Warnings name the job by the best identifier available:** its id, or its title if the
+id is missing, or its URL if both are missing. A warning that can't say which job was
+skipped can't be acted on.
+
+**A missing or invalid posted date means the job is skipped.** The alternative,
+`posted_at = None`, would crash later when sorting newest first, far from the cause, and
+a job with no date can't answer "posted in the last 7 days" anyway.
+
+**One bad job never fails the whole company.** Date parsing catches its own errors and
+returns `None` instead of raising, and `null` values (`"location": null`) are handled like
+missing keys.
+
+**Company-level failures go in an `errors` list,** and results from other companies
+still return.
+
+## Timestamps
+
+**`posted_at` is a `datetime` in UTC inside the code,** converted to an ISO date string
+only when building tool responses and Notion rows. Keeping the time of day makes
+"newest first" sorting exact, and `posted_within_days` becomes simple subtraction.
+
+**Greenhouse and Ashby dates share one parser (`_parse_iso_utc`).** Two separate copies
+had already drifted apart, and one of them had a bug.
+
+**A date with no time zone is treated as UTC.** This is an assumption: every real
+response seen so far includes an offset. `.replace(tzinfo=timezone.utc)` is used rather
+than `.astimezone()`, because `.astimezone()` on a naive datetime assumes the computer's
+local time zone, which would give different results on different machines.
+
+## Caching
+
+**A small in-memory cache written by hand (`TTLCache`), not a library.** Written for
+learning; the requirement is just "same URL within 15 minutes means no new request."
+
+**The cache stores raw JSON, keyed by URL, and sits just before the network request.**
+One cache works for every ATS without knowing what a `Job` is, Ashby's `get_job` can
+read the raw list (with descriptions), and normalizer changes take effect without
+waiting for entries to expire.
+
+**Entries expire at exactly 15 minutes (`>= ttl`).** Time is measured with
+`time.monotonic()`, which only moves forward, unlike the wall clock, which can jump.
+The clock is passed in as a parameter so tests can control time instead of waiting.
+
+**Failed requests are not cached.** Only a successful (200) response is stored, so the
+next search retries. A wrong slug therefore costs one request per search until it's
+fixed, which is acceptable.
+
+**Expired entries are removed when they're read, and nothing else cleans them up.**
+Memory grows with the number of different URLs, not with how often companies post: a
+new posting replaces the same list URL's entry. The main growth comes from `get_job`,
+since every job opened adds a detail URL. For ~9 companies and a few hundred opened jobs
+that's a few hundred KB, so it's fine. A long-running server opening thousands of jobs
+would need periodic cleanup or a size limit.
 
 ## Lanes
 
@@ -152,10 +214,11 @@ to commas or dashes. Tradeoff: "grad program" no longer matches "AddeGrad Progra
 not match "Customer Success Engineer"; otherwise multi-word keywords would match words
 scattered across a long title.
 
-**Known gaps, found in Deepgram data (open):**
+**Gaps found in Deepgram data:**
 - "Research Staff, Voice AI Foundations" is excluded by `staff`, but "Research Staff"
-  there is a job family, not a seniority level.
-- "Customer Success Engineer (Scaled)" matches no lane. Possibly a deployment role.
+  there is a job family, not a seniority level. Accepted as a known miss.
+- "Customer Success Engineer (Scaled)" matched no lane. Resolved: `customer success
+  engineer` added to `deployment`.
 
 ## Testing
 
