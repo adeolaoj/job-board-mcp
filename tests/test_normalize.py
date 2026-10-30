@@ -247,8 +247,7 @@ def test_ashby_skips_unlisted_job(ashby_raw):
     jobs, warnings = normalize_ashby(ashby_raw, "Deepgram")
 
     assert len(jobs) == 4
-    assert len(warnings) == 1
-    assert "7cf277bc-a192-4007-a77a-fafbf8276a5e" in warnings[0]
+    assert warnings == []
 
 
 ### Lever Normalization Tests ###

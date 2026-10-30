@@ -106,10 +106,6 @@ def normalize_ashby(raw: dict, company: str) -> tuple[list[Job], list[str]]:
 
     for job in raw["jobs"]:
         if job.get("isListed") is False:
-            warnings.append(
-                f"Skipping unlisted job: "
-                f"{_job_label(job.get('id'), job.get('title'), job.get('jobUrl'))}"
-            )
             continue
 
         title = job.get("title", "")
