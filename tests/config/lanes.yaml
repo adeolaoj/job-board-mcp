@@ -1,0 +1,48 @@
+# Lane keywords, matched against job titles only.
+# Titles and keywords are lowercased and split into words (punctuation dropped).
+# A keyword matches when its words appear next to each other, in order, in the title.
+# If any exclude keyword matches, the job gets no lanes at all.
+
+lanes:
+  deployment:
+    - deployment strategist
+    - forward deployed
+    - deployed engineer
+    - ai deployment
+    - solutions engineer
+    - implementation
+    - solutions consultant
+    - customer engineer
+    - customer success engineer
+    - technical account manager
+    - applied ai
+    - customer facing
+
+  pm:
+    - associate product manager
+    - technical product manager
+    - ai product manager
+    - agent product manager
+    - product manager
+    - product owner
+    - product operations
+    - technical program manager
+
+  new_grad:
+    - new grad
+    - early career
+    - grad program
+    - graduate
+    - student
+    - "2026"
+    - "2027"
+
+exclude:
+  - senior
+  - sr.
+  - staff
+  - principal
+  - director
+  - head of
+  - lead
+  - intern
