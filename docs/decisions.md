@@ -171,3 +171,22 @@ to include edge cases. Raw exploration downloads live in `test-files/` and are g
 | `ashby_jobs.json` | Deepgram list | 5: `forward-deployed` hyphen match (OnSite), `Senior` FDE with null `workplaceType` and `isRemote`, `Hybrid` vs `isRemote: true` conflict, "Research Staff" with 2 secondary locations, "Customer Success Engineer" with no lane |
 
 Ashby has no detail fixture because it has no public detail endpoint.
+## Stretch goals
+
+**First stretch goal: `add_company(careers_url)`.** Instead of editing `companies.yaml`
+by hand, Claude finds companies (with its own web search) and calls this tool, which
+works out the ATS and slug from a direct ATS URL (`job-boards.greenhouse.io/{token}`,
+`jobs.lever.co/{company}`, `jobs.ashbyhq.com/{org}`), checks it with one real request,
+and saves it only if that request succeeds. Claude handles fuzzy discovery; the server
+handles the reliable parts. Comes after the core tools and ahead of the spec's
+other stretch goals, because it solves a problem hit in real use.
+
+Open questions: whether added companies go into `companies.yaml` (tracked) or a
+gitignored local file, and whether to support careers pages that embed a board.
+
+**Rejected: searching beyond a chosen list.** These APIs are per company; there is no
+public endpoint to search across all boards, so any wider search means knowing slugs
+in advance. Loading thousands of slugs from community lists would mean thousands of
+requests per search, which breaks the low-volume principle and becomes crawling.
+Job aggregator APIs were also rejected: many aggregators get their data by scraping,
+and they usually require keys or payment. Guessing slugs is brute force.
