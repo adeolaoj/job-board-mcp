@@ -39,19 +39,16 @@ def classify(title: str, lanes: dict) -> list[str]:
     title_tokens = tokenize(title)
 
     for token in title_tokens:
-        if token in lanes["exclude"]:
-            return []
+        for word in lanes["exclude"]:
+            if matches([token], word):
+                return []
 
     result = []
-    seen = set()
 
     extracted_lanes = lanes.get('lanes', {})
 
     for lane, keywords in extracted_lanes.items():
-        for keyword in keywords:
-            if matches(title_tokens, keyword):
-                if lane not in seen:
-                    seen.add(lane)
+            if any(matches(title_tokens, keyword) for keyword in keywords):
                     result.append(lane)
                 
     
