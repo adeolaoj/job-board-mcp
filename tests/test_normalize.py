@@ -189,7 +189,7 @@ def test_ashby_skips_job_without_id(ashby_raw):
 
     assert len(jobs) == 4
     assert len(warnings) == 1
-    assert "7cf277bc-a192-4007-a77a-fafbf8276a5e" in warnings[0]
+    assert "Research Staff, Voice AI Foundations" in warnings[0]
 
 
 def test_ashby_skips_job_without_url(ashby_raw):
@@ -274,6 +274,7 @@ def test_lever_joins_all_locations(lever_raw):
     assert job_by_id["a30574c9-8ef3-408f-bc85-39aad54ad115"].location == (
         "Foster City, CA; Seattle, WA; Boston, MA"
     )
+    assert job_by_id["a30574c9-8ef3-408f-bc85-39aad54ad115"].remote is False
 
 
 def test_lever_skips_job_without_title(lever_raw):
@@ -293,7 +294,7 @@ def test_lever_skips_job_without_id(lever_raw):
 
     assert len(jobs) == 3
     assert len(warnings) == 1
-    assert "8af192a0-9ee4-45de-a241-f373cb2ef71c" in warnings[0]
+    assert "Director, Corporate Security" in warnings[0]
 
 
 def test_lever_skips_job_without_url(lever_raw):
