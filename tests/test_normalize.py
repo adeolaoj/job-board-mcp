@@ -117,6 +117,26 @@ def test_greenhouse_skips_job_with_broken_date(greenhouse_raw):
     assert "8815241002" in warnings[0]  # the warning names the skipped job
 
 
+def test_greenhouse_treats_naive_date_as_utc(greenhouse_raw):
+    greenhouse_raw["jobs"][0]["first_published"] = "2026-09-16T15:27:34"
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert warnings == []
+    assert jobs[0].posted_at == datetime(2026, 9, 16, 15, 27, 34, tzinfo=timezone.utc)
+
+
+def test_greenhouse_skips_job_with_non_string_date(greenhouse_raw):
+    greenhouse_raw["jobs"][0]["first_published"] = 1760000000
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert len(jobs) == 4
+    assert len(warnings) == 1
+    assert "invalid date" in warnings[0]
+    assert "8815241002" in warnings[0]
+
+
 
 
 ### Ashby Normalization Tests ###
@@ -213,6 +233,16 @@ def test_ashby_continues_without_location(ashby_raw):
 
 def test_ashby_skips_job_with_broken_date(ashby_raw):
     ashby_raw["jobs"][0]["publishedAt"] = "thrd67867vf"
+
+    jobs, warnings = normalize_ashby(ashby_raw, "Deepgram")
+
+    assert len(jobs) == 4
+    assert len(warnings) == 1
+    assert "7cf277bc-a192-4007-a77a-fafbf8276a5e" in warnings[0]
+
+
+def test_ashby_skips_unlisted_job(ashby_raw):
+    ashby_raw["jobs"][0]["isListed"] = False
 
     jobs, warnings = normalize_ashby(ashby_raw, "Deepgram")
 

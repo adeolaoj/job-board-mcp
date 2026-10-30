@@ -6,7 +6,11 @@ from job_board_mcp.lanes import matches, tokenize
 from job_board_mcp.models import Job
 
 
-def _job_label(job_id: object, title: object, url: object) -> str:
+def _job_label(
+    job_id: str | int | None,
+    title: str | None,
+    url: str | None,
+) -> str:
     """Return the best available identifier for a job warning."""
     if job_id:
         return f"job_id={job_id}"
@@ -15,6 +19,20 @@ def _job_label(job_id: object, title: object, url: object) -> str:
     if url:
         return f"url={url}"
     return "unknown job"
+
+
+def _parse_iso_utc(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _remote_from_workplace_type(workplace_type: object) -> bool | None:
@@ -39,7 +57,7 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
 
         # First try to get the job title, ID, and URL from the raw job data
         title = job.get("title", "")
-        job_id = job.get("id", "")       
+        job_id = job.get("id", "")
         url = job.get("absolute_url", "")
         date_str = job.get("first_published", "")
 
@@ -49,16 +67,13 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
             )
             continue
 
-        try:
-            local_time = datetime.fromisoformat(date_str)
-        except ValueError:
+        posted_at = _parse_iso_utc(date_str)
+        if posted_at is None:
             warnings.append(
                 f"Skipping job with invalid date: {_job_label(job_id, title, url)}, "
                 f"posted_at={date_str}"
             )
             continue
-        
-        posted_at = local_time.astimezone(timezone.utc)
 
         job_id = str(job_id)
         location = (job.get("location") or {}).get("name", "")
@@ -68,17 +83,15 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
         else:
             remote = None
 
-        ats = "greenhouse"
-
         normalized_job = Job(
-            company = company,
-            title = title,
-            location = location,
-            remote = remote,
-            url = url,
-            posted_at = posted_at,
-            ats = ats,
-            job_id = job_id
+            company=company,
+            title=title,
+            location=location,
+            remote=remote,
+            url=url,
+            posted_at=posted_at,
+            ats="greenhouse",
+            job_id=job_id,
         )
 
         jobs.append(normalized_job)
@@ -92,6 +105,13 @@ def normalize_ashby(raw: dict, company: str) -> tuple[list[Job], list[str]]:
     jobs = []
 
     for job in raw["jobs"]:
+        if job.get("isListed") is False:
+            warnings.append(
+                f"Skipping unlisted job: "
+                f"{_job_label(job.get('id'), job.get('title'), job.get('jobUrl'))}"
+            )
+            continue
+
         title = job.get("title", "")
         job_id = job.get("id", "")
         url = job.get("jobUrl", "")
@@ -103,26 +123,13 @@ def normalize_ashby(raw: dict, company: str) -> tuple[list[Job], list[str]]:
             )
             continue
 
-        if not isinstance(date_str, str):
+        posted_at = _parse_iso_utc(date_str)
+        if posted_at is None:
             warnings.append(
                 f"Skipping job with invalid date: {_job_label(job_id, title, url)}, "
                 f"posted_at={date_str}"
             )
             continue
-
-        try:
-            posted_at = datetime.fromisoformat(date_str)
-        except ValueError:
-            warnings.append(
-                f"Skipping job with invalid date: {_job_label(job_id, title, url)}, "
-                f"posted_at={date_str}"
-            )
-            continue
-
-        if posted_at.tzinfo is None:
-            posted_at = posted_at.replace(tzinfo=timezone.utc)
-        else:
-            posted_at = posted_at.astimezone(timezone.utc)
 
         secondary_locations = job.get("secondaryLocations") or []
         locations = [job.get("location") or ""]
@@ -166,9 +173,7 @@ def normalize_lever(raw: dict, company: str) -> tuple[list[Job], list[str]]:
         created_at = job.get("createdAt")
 
         if not title or not job_id or not url or created_at is None or created_at == "":
-            warnings.append(
-                f"Skipping job with missing fields: {_job_label(job_id, title, url)}"
-            )
+            warnings.append(f"Skipping job with missing fields: {_job_label(job_id, title, url)}")
             continue
 
         if isinstance(created_at, bool) or not isinstance(created_at, (int, float)):
