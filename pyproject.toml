@@ -1,7 +1,7 @@
 [project]
 name = "job-board-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "An MCP that allows Claude to scan ATS job boards for relevant opportunities"
 readme = "README.md"
 authors = [
     { name = "Adeola", email = "adeolaojuade1@gmail.com" }

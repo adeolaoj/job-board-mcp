@@ -41,10 +41,9 @@ def classify(title: str, lanes: dict) -> list[str]:
     """Return the lanes a title belongs to, in config order. Empty if any exclude keyword matches."""
     title_tokens = tokenize(title)
 
-    for token in title_tokens:
-        for word in lanes["exclude"]:
-            if matches([token], word):
-                return []
+    for word in lanes["exclude"]:
+        if matches(title_tokens, word):
+            return []
 
     result = []
 

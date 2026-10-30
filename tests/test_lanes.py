@@ -54,6 +54,8 @@ def test_matches_whole_words_only():
         ("Solutions Engineer, International", ["deployment"]),
         ("Software Engineer Intern (Summer 2027)", []),
         ("New Graduate Software Engineer", ["new_grad"]),
+        ("Sr. Solutions Engineer", []),
+        ("Head of Product Operations", []),
     ],
 )
 def test_classify(lanes, title, expected):
