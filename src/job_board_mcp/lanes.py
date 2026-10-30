@@ -15,7 +15,10 @@ def load_lanes(path: Path) -> dict:
 def tokenize(text: str) -> list[str]:
     """Lowercase text and split it into words of letters and digits."""
     lowercase = text.lower()
-    tokens = re.findall(r"\w+", lowercase)
+
+    # Using \w to match word characters instead of [a-z0-9] helps include
+    # underscores and other word characters as well
+    tokens = re.findall(r"\w+", lowercase) # Extract all word characters as tokens
     return tokens
 
 
