@@ -5,10 +5,12 @@ from pathlib import Path
 import pytest
 
 from job_board_mcp.models import Job
-from job_board_mcp.normalize import normalize_greenhouse
+from job_board_mcp.normalize import normalize_greenhouse, normalize_ashby
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
+
+### Greenhouse Normalization Tests ###
 
 @pytest.fixture
 def greenhouse_raw():
@@ -62,3 +64,53 @@ def test_greenhouse_skips_job_without_title(greenhouse_raw):
     assert len(warnings) == 1
     assert "8815241002" in warnings[0]  # the warning names the skipped job
 
+
+def test_greenhouse_skips_job_without_id(greenhouse_raw):
+    # A real entry with one field broken. The fixture file itself stays unedited.
+    greenhouse_raw["jobs"][0]["id"] = ""
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert len(jobs) == 4
+    assert len(warnings) == 1
+    assert "8815241002" in warnings[0]  # the warning names the skipped job
+
+
+def test_greenhouse_skips_job_without_url(greenhouse_raw):
+    # A real entry with one field broken. The fixture file itself stays unedited.
+    greenhouse_raw["jobs"][0]["absolute_url"] = ""
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert len(jobs) == 4
+    assert len(warnings) == 1
+    assert "8815241002" in warnings[0]  # the warning names the skipped job
+
+
+def test_greenhouse_continues_without_location(greenhouse_raw):
+    greenhouse_raw["jobs"][0]["location"] = {}
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert len(jobs) == 5
+    assert len(warnings) == 0
+
+
+def test_greenhouse_skips_job_with_broken_date(greenhouse_raw):
+    # A real entry with one field broken. The fixture file itself stays unedited.
+    greenhouse_raw["jobs"][0]["first_published"] = "thrd67867vf"
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert len(jobs) == 4
+    assert len(warnings) == 1
+    assert "8815241002" in warnings[0]  # the warning names the skipped job
+
+
+
+
+### Ashby Normalization Tests ###
+@pytest.fixture
+def ashby_raw():
+    # Load fresh raw data from the fixture file for each test
+        return json.loads((FIXTURES / "ashby_jobs.json").read_text(encoding="utf-8"))

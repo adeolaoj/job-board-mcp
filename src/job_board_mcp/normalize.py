@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 
+from job_board_mcp.lanes import matches, tokenize
 from job_board_mcp.models import Job
 
 
@@ -11,38 +12,35 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
     warnings = []
     jobs = []
 
-    for job in raw.get("jobs", []):
+    for job in raw["jobs"]:
 
         # First try to get the job title, ID, and URL from the raw job data
         title = job.get("title", "")
         job_id = job.get("id", "")       
         url = job.get("absolute_url", "")
+        date_str = job.get("first_published", "")
 
-        if not title or not job_id or not url:
-            warnings.append(f"Skipping job with missing fields: title={title}, job_id={job_id}, url={url}")
+        if not title or not job_id or not url or not date_str:
+            warnings.append(f"Skipping job with missing fields: title={title}, job_id={job_id}, url={url}, posted_at={date_str}")
             continue
 
-        if isinstance(job_id, int):
-            job_id = str(job_id)
+        try:
+            local_time = datetime.fromisoformat(date_str)
+        except ValueError:
+            warnings.append(f"Skipping job with invalid date: job_id={job_id}, posted_at={date_str}")
+            continue
+        
+        posted_at = local_time.astimezone(timezone.utc)
 
-        location = job.get("location", {}).get("name", "")
+        job_id = str(job_id)
+        location = (job.get("location") or {}).get("name", "")
 
-        if "remote" in location.lower():
+        if matches(tokenize(location), "remote"):
             remote = True
         else:
             remote = None
 
-        date_str = job.get("first_published", "")
-
-        if date_str:
-            local_time = datetime.fromisoformat(date_str)
-            posted_at = local_time.astimezone(timezone.utc)
-        else:
-            posted_at = None
-
         ats = "greenhouse"
-
-        lanes = []
 
         normalized_job = Job(
             company = company,
@@ -52,8 +50,7 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
             url = url,
             posted_at = posted_at,
             ats = ats,
-            job_id = job_id,
-            lanes = lanes
+            job_id = job_id
         )
 
         jobs.append(normalized_job)
