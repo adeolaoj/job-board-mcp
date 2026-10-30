@@ -10,7 +10,7 @@ class Job:
     location: str
     remote: bool | None
     url: str
-    poste_at: datetime # UTC
+    posted_at: datetime # UTC
     ats: str # 'greenhouse' | 'lever' | 'ashby'
     job_id: str
     lanes: list[str] = field(default_factory=list) # Ensures every instance of Job has its own list of lanes
