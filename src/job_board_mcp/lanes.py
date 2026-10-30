@@ -45,7 +45,9 @@ def classify(title: str, lanes: dict) -> list[str]:
 
     result = []
 
-    extracted_lanes = lanes.get('lanes', {})
+    # Note: using lanes.get returns a an empty dictionary if the 'lanes' key is missing.
+    # Changed this to lanes["lanes"] to raise KeyError immediately if 'lanes' is missing.
+    extracted_lanes = lanes["lanes"]
 
     for lane, keywords in extracted_lanes.items():
             if any(matches(title_tokens, keyword) for keyword in keywords):
