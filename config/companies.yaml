@@ -1,0 +1,77 @@
+# List of companies to include in the job search
+
+- name: Addepar
+  ats: greenhouse
+  slug: addepar1
+
+- name: Pallet
+  ats: greenhouse
+  slug: pallet
+
+- name: LangChain
+  ats: ashby
+  slug: langchain
+
+- name: Lio
+  ats: ashby
+  slug: lio
+
+- name: AssortHealth
+  ats: greenhouse
+  slug: assorthealth
+
+- name: Affirm
+  ats: greenhouse
+  slug: affirm
+
+- name: Mercury
+  ats: greenhouse
+  slug: mercury
+
+- name: Clear
+  ats: greenhouse
+  slug: clear
+
+- name: Aircall
+  ats: greenhouse
+  slug: aircallioinc
+
+- name: Lucidworks
+  ats: lever
+  slug: lucidworks
+
+- name: Zoox
+  ats: lever
+  slug: zoox
+
+- name: Cohere
+  ats: ashby
+  slug: cohere
+
+- name: InstaLILY
+  ats: greenhouse
+  slug: instalily
+
+- name: Scale AI
+  ats: greenhouse
+  slug: scaleai
+
+- name: Anduril Industries
+  ats: greenhouse
+  slug: andurilindustries
+
+- name: Cloudflare
+  ats: greenhouse
+  slug: cloudflare
+
+- name: Ramp
+  ats: ashby
+  slug: ramp
+
+- name: Vercel
+  ats: ashby
+  slug: vercel
+
+- name: Linear
+  ats: ashby
+  slug: linear
