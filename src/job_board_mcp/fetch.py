@@ -1,7 +1,6 @@
 """Fetch job board JSON over HTTP, with caching."""
 
 import asyncio
-import json
 from typing import Any
 
 import httpx
@@ -19,8 +18,8 @@ class FetchError(Exception):
 
 
 def make_client() -> httpx.AsyncClient:
-    """Create an HTTP client with the appropriate headers."""
-    return httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+    """Create an HTTP client with standard headers and a 10-second request timeout."""
+    return httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=10.0)
 
 
 def list_url(company: Company) -> str:
@@ -32,7 +31,7 @@ def list_url(company: Company) -> str:
     if company.ats == "ashby":
         return f"https://api.ashbyhq.com/posting-api/job-board/{company.slug}"
 
-    raise FetchError(f"Unsupported ATS: {company.ats}")
+    raise ValueError(f"Unsupported ATS: {company.ats}")
 
 
 def detail_url(company: Company, job_id: str) -> str:
@@ -45,12 +44,12 @@ def detail_url(company: Company, job_id: str) -> str:
     if company.ats == "lever":
         return f"https://api.lever.co/v0/postings/{company.slug}/{job_id}?mode=json"
 
-    raise FetchError(f"Unsupported ATS: {company.ats}")
+    raise ValueError(f"Unsupported ATS: {company.ats}")
 
 
 class Fetcher:
     def __init__(self, client: httpx.AsyncClient, cache: TTLCache):
-        self._client_ = client
+        self._client = client
         self._cache_ = cache
 
     async def fetch_json(self, url: str) -> Any:
@@ -63,9 +62,11 @@ class Fetcher:
         # Otherwise, fetch the json and store in the cache
 
         try:
-            response = await self._client_.get(url)
-        except httpx.HTTPError:
-            raise FetchError(f"Failed to fetch {url}")
+            response = await self._client.get(url)
+        except httpx.HTTPError as exc:
+            raise FetchError(
+                f"Failed to fetch {url} ({type(exc).__name__})"
+            ) from exc
 
         if response.status_code != 200:
             raise FetchError(f"Failed to fetch {url}: {response.status_code}")
@@ -73,8 +74,8 @@ class Fetcher:
         # Check if response is valid JSON
         try:
             data = response.json()
-        except json.JSONDecodeError:
-            raise FetchError(f"Response from {url} is not valid JSON")
+        except ValueError as exc:
+            raise FetchError(f"Response from {url} is not valid JSON") from exc
 
         self._cache_.set(url, data)
 
@@ -87,7 +88,7 @@ class Fetcher:
         async def fetch_one(company: Company) -> Any | Exception:
             try:
                 return await self.fetch_json(list_url(company))
-            except Exception as exc:
+            except FetchError as exc:
                 return exc
         
         return await asyncio.gather(*(fetch_one(company) for company in companies))

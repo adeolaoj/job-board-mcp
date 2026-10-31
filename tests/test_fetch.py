@@ -54,8 +54,20 @@ def test_ashby_has_no_detail_url():
         detail_url(DEEPGRAM, "anything")
 
 
+def test_unsupported_ats_raises_value_error():
+    unsupported = Company(name="Unsupported", ats="unknown", slug="unknown")
+
+    with pytest.raises(ValueError, match="Unsupported ATS"):
+        list_url(unsupported)
+
+    with pytest.raises(ValueError, match="Unsupported ATS"):
+        detail_url(unsupported, "job-id")
+
+
 def test_client_sends_user_agent():
-    assert make_client().headers["User-Agent"] == USER_AGENT
+    client = make_client()
+    assert client.headers["User-Agent"] == USER_AGENT
+    assert client.timeout.read == 10.0
 
 
 # --- fetch_json ---
@@ -146,14 +158,32 @@ async def test_non_json_200_raises_fetch_error():
 
 
 @pytest.mark.anyio
+async def test_invalid_utf8_json_raises_fetch_error():
+    fetcher = make_fetcher(
+        lambda request: httpx.Response(
+            200,
+            content=b'{"a": "\xff"}',
+            headers={"Content-Type": "application/json"},
+        )
+    )
+
+    with pytest.raises(FetchError, match="not valid JSON") as exc_info:
+        await fetcher.fetch_json("https://example.com/jobs")
+
+    assert isinstance(exc_info.value.__cause__, UnicodeDecodeError)
+
+
+@pytest.mark.anyio
 async def test_network_error_raises_fetch_error():
     def handler(request):
         raise httpx.ConnectError("connection refused", request=request)
 
     fetcher = make_fetcher(handler)
 
-    with pytest.raises(FetchError):
+    with pytest.raises(FetchError, match="ConnectError") as exc_info:
         await fetcher.fetch_json("https://example.com/jobs")
+
+    assert isinstance(exc_info.value.__cause__, httpx.ConnectError)
 
 
 # --- fetch_boards ---
