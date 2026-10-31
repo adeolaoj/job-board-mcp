@@ -1,9 +1,11 @@
 """Convert each ATS's raw API response into the shared Job format."""
 
+import html
 from datetime import datetime, timezone
 
 from job_board_mcp.lanes import matches, tokenize
 from job_board_mcp.models import Job
+from job_board_mcp.text import html_to_text
 
 
 def _job_label(
@@ -208,3 +210,29 @@ def normalize_lever(raw: dict, company: str) -> tuple[list[Job], list[str]]:
         )
 
     return jobs, warnings
+
+
+def description_greenhouse(raw: dict) -> str:
+    """Return plain text from a Greenhouse detail response's double-escaped `content`."""
+    # Unescape once to get real tags; html_to_text decodes the second layer (&amp;amp; -> &).
+    return html_to_text(html.unescape(raw.get("content") or ""))
+
+
+def description_lever(raw: dict) -> str:
+    """Return descriptionPlain, each list (heading plus bullets), then additionalPlain."""
+    # descriptionPlain leaves out responsibilities and qualifications, which are only in lists[].
+    sections = [(raw.get("descriptionPlain") or "").strip()]
+    for section in raw.get("lists") or []:
+        if not isinstance(section, dict):
+            continue
+        heading = (section.get("text") or "").strip()
+        body = html_to_text(section.get("content") or "")
+        sections.append("\n".join(part for part in (heading, body) if part))
+    sections.append((raw.get("additionalPlain") or "").strip())
+
+    return "\n\n".join(section for section in sections if section)
+
+
+def description_ashby(raw: dict) -> str:
+    """Return an Ashby posting's descriptionPlain, which is already complete."""
+    return (raw.get("descriptionPlain") or "").strip()

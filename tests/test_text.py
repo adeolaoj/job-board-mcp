@@ -31,6 +31,11 @@ def test_list_items_become_bullets():
     assert html_to_text("<ul><li>First</li><li>Second</li></ul>") == "- First\n- Second"
 
 
+def test_empty_list_item_does_not_bullet_later_text():
+    # Rich-text editors leave empty <li>s behind; the pending bullet must not leak out.
+    assert html_to_text("<ul><li></li></ul><p>Next paragraph</p>") == "Next paragraph"
+
+
 def test_headings_go_on_their_own_line():
     html_in = "<h1><strong>Company Overview</strong></h1><p>We build things.</p>"
     assert html_to_text(html_in) == "Company Overview\nWe build things."

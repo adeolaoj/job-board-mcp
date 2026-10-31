@@ -5,7 +5,14 @@ from pathlib import Path
 import pytest
 
 from job_board_mcp.models import Job
-from job_board_mcp.normalize import normalize_greenhouse, normalize_ashby, normalize_lever
+from job_board_mcp.normalize import (
+    description_ashby,
+    description_greenhouse,
+    description_lever,
+    normalize_ashby,
+    normalize_greenhouse,
+    normalize_lever,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -353,3 +360,83 @@ def test_lever_skips_job_with_broken_date(lever_raw):
     assert len(jobs) == 3
     assert len(warnings) == 1
     assert "8af192a0-9ee4-45de-a241-f373cb2ef71c" in warnings[0]
+
+
+### Description Tests ###
+
+@pytest.fixture
+def greenhouse_detail():
+    return json.loads((FIXTURES / "greenhouse_job_detail.json").read_text(encoding="utf-8"))
+
+
+@pytest.fixture
+def lever_detail():
+    return json.loads((FIXTURES / "lever_job_detail.json").read_text(encoding="utf-8"))
+
+
+def test_greenhouse_description_unescapes_both_layers(greenhouse_detail):
+    text = description_greenhouse(greenhouse_detail)
+
+    assert text.startswith("Who We Are")
+    assert "<" not in text
+    assert "&lt;" not in text
+    assert "&amp;" not in text
+    assert "R&D" in text
+    assert "- Provide hands-on support" in text
+
+
+def test_greenhouse_description_missing_content_is_empty(greenhouse_detail):
+    del greenhouse_detail["content"]
+
+    assert description_greenhouse(greenhouse_detail) == ""
+
+
+def test_lever_description_includes_lists_and_additional(lever_detail):
+    text = description_lever(lever_detail)
+
+    assert text.startswith("The Program Management Office (PMO) at Zoox")
+    assert "<li>" not in text
+    assert "In this Role, You Will...\n- Drive Clarity and Unity" in text
+    for section in lever_detail["lists"]:
+        assert section["text"] in text
+    assert "About Zoox" in text
+
+
+def test_lever_description_keeps_section_order(lever_detail):
+    text = description_lever(lever_detail)
+
+    description_at = text.index("The Program Management Office")
+    first_list_at = text.index("In this Role, You Will...")
+    last_list_at = text.index("Bonus Qualifications")
+    additional_at = text.index("About Zoox")
+    assert description_at < first_list_at < last_list_at < additional_at
+
+
+def test_lever_description_without_lists(lever_detail):
+    lever_detail["lists"] = None
+
+    text = description_lever(lever_detail)
+
+    assert "In this Role, You Will..." not in text
+    assert text.startswith("The Program Management Office")
+    assert "About Zoox" in text
+
+
+def test_lever_description_missing_everything_is_empty():
+    assert description_lever({}) == ""
+
+
+def test_ashby_description_uses_description_plain(ashby_raw):
+    job = ashby_raw["jobs"][0]
+
+    text = description_ashby(job)
+
+    assert text == job["descriptionPlain"].strip()
+    assert text.startswith("COMPANY OVERVIEW")
+
+
+def test_ashby_description_missing_is_empty(ashby_raw):
+    job = ashby_raw["jobs"][0]
+    job["descriptionPlain"] = None
+
+    assert description_ashby(job) == ""

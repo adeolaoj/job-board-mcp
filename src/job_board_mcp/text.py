@@ -23,9 +23,9 @@ class _TextExtractor(HTMLParser):
     def handle_endtag(self, tag):            # called for </p>, </li>, ...
         if tag in BLOCK_TAGS:
             self._text.append("\n")
-
-    def handle_startendtag(self, tag, attrs):  # called for self-closing tags like <br/>
-        self.handle_starttag(tag, attrs)
+        if tag == "li":
+            # An item with no text (empty, or only an <img>) must not bullet the next text.
+            self._bullet_pending = False
 
     def handle_data(self, data):             # called with the text between tags
         if self._bullet_pending and data.strip():
@@ -45,5 +45,5 @@ def html_to_text(html: str) -> str:
     """Return readable text: block tags become line breaks, <li> becomes "- ", entities decoded."""
     parser = _TextExtractor()
     parser.feed(html)
-    parser.close()  # removes text still buffered after the last tag
+    parser.close()  # flushes text still buffered after the last tag, so it isn't lost
     return parser.get_text()
