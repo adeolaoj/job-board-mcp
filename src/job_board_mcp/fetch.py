@@ -50,12 +50,12 @@ def detail_url(company: Company, job_id: str) -> str:
 class Fetcher:
     def __init__(self, client: httpx.AsyncClient, cache: TTLCache):
         self._client = client
-        self._cache_ = cache
+        self._cache = cache
 
     async def fetch_json(self, url: str) -> Any:
         """Return parsed JSON for url, from the cache if fresh. Raises FetchError on any failure."""
 
-        cached = self._cache_.get(url, _CACHE_MISS)
+        cached = self._cache.get(url, _CACHE_MISS)
         if cached is not _CACHE_MISS:
             return cached
 
@@ -77,7 +77,7 @@ class Fetcher:
         except ValueError as exc:
             raise FetchError(f"Response from {url} is not valid JSON") from exc
 
-        self._cache_.set(url, data)
+        self._cache.set(url, data)
 
         return data
     
