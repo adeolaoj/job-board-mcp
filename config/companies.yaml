@@ -17,7 +17,7 @@
   slug: lio
 
 - name: AssortHealth
-  ats: greenhouse
+  ats: ashby
   slug: assorthealth
 
 - name: Affirm
@@ -50,15 +50,7 @@
 
 - name: InstaLILY
   ats: greenhouse
-  slug: instalily
-
-- name: Scale AI
-  ats: greenhouse
-  slug: scaleai
-
-- name: Anduril Industries
-  ats: greenhouse
-  slug: andurilindustries
+  slug: instalilyai
 
 - name: Cloudflare
   ats: greenhouse
@@ -75,3 +67,23 @@
 - name: Linear
   ats: ashby
   slug: linear
+
+- name: Deepgram
+  ats: ashby
+  slug: deepgram
+
+- name: Decagon
+  ats: ashby
+  slug: decagon
+
+- name: Sierra
+  ats: ashby
+  slug: sierra
+
+- name: Cresta
+  ats: greenhouse
+  slug: cresta
+
+- name: Flip
+  ats: greenhouse
+  slug: flip

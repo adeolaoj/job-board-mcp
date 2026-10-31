@@ -17,7 +17,7 @@ class Company:
 
 def load_companies(path: Path) -> list[Company]:
     """Load companies from YAML. Raises ValueError naming the bad entry if any is invalid."""
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
     if not isinstance(data, list):
