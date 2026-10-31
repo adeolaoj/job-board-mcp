@@ -13,17 +13,17 @@ class TTLCache:
         # The cache is a dictionary mapping keys to tuples of (timestamp, value)
         self._cache: dict[str, tuple[float, Any]] = {}
 
-    def get(self, key: str) -> Any | None:
-        """Return the cached value, or None if it's missing or expired."""
+    def get(self, key: str, default: Any = None) -> Any:
+        """Return the cached value, or default if it's missing or expired."""
         entry = self._cache.get(key)
         if entry is None:
-            return None
+            return default
 
         timestamp, value = entry
 
         if self._clock() - timestamp >= self._ttl_seconds:
             del self._cache[key]
-            return None
+            return default
 
         return value
 
