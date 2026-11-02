@@ -56,6 +56,9 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
     jobs = []
 
     for job in raw["jobs"]:
+        if not isinstance(job, dict):
+            warnings.append(f"Skipping job entry that isn't an object: {job!r}")
+            continue
 
         # First try to get the job title, ID, and URL from the raw job data
         title = job.get("title", "")
@@ -63,7 +66,8 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
         url = job.get("absolute_url", "")
         date_str = job.get("first_published", "")
 
-        if not title or not job_id or not url or not date_str:
+        # A non-string title would crash lane matching later, so treat it as missing.
+        if not isinstance(title, str) or not title or not job_id or not url or not date_str:
             warnings.append(
                 f"Skipping job with missing fields: {_job_label(job_id, title, url)}"
             )
@@ -78,7 +82,10 @@ def normalize_greenhouse(raw: dict, company: str) -> tuple[list[Job], list[str]]
             continue
 
         job_id = str(job_id)
-        location = (job.get("location") or {}).get("name", "")
+        location_obj = job.get("location")
+        location = location_obj.get("name") if isinstance(location_obj, dict) else None
+        if not isinstance(location, str):
+            location = ""
 
         if matches(tokenize(location), "remote"):
             remote = True
@@ -107,6 +114,10 @@ def normalize_ashby(raw: dict, company: str) -> tuple[list[Job], list[str]]:
     jobs = []
 
     for job in raw["jobs"]:
+        if not isinstance(job, dict):
+            warnings.append(f"Skipping job entry that isn't an object: {job!r}")
+            continue
+
         if job.get("isListed") is False:
             continue
 
@@ -115,7 +126,8 @@ def normalize_ashby(raw: dict, company: str) -> tuple[list[Job], list[str]]:
         url = job.get("jobUrl", "")
         date_str = job.get("publishedAt", "")
 
-        if not title or not job_id or not url or not date_str:
+        # A non-string title would crash lane matching later, so treat it as missing.
+        if not isinstance(title, str) or not title or not job_id or not url or not date_str:
             warnings.append(
                 f"Skipping job with missing fields: {_job_label(job_id, title, url)}"
             )
@@ -165,12 +177,17 @@ def normalize_lever(raw: dict, company: str) -> tuple[list[Job], list[str]]:
     jobs = []
 
     for job in raw:
+        if not isinstance(job, dict):
+            warnings.append(f"Skipping job entry that isn't an object: {job!r}")
+            continue
+
         title = job.get("text", "")
         job_id = job.get("id", "")
         url = job.get("hostedUrl", "")
         created_at = job.get("createdAt")
 
-        if not title or not job_id or not url or created_at is None or created_at == "":
+        # A non-string title would crash lane matching later, so treat it as missing.
+        if not isinstance(title, str) or not title or not job_id or not url or created_at is None or created_at == "":
             warnings.append(f"Skipping job with missing fields: {_job_label(job_id, title, url)}")
             continue
 

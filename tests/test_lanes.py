@@ -26,6 +26,12 @@ def test_matches_requires_adjacent_words():
     assert not matches(title, "customer engineer")
 
 
+@pytest.mark.parametrize("keyword", ["", "   ", "--", "/"])
+def test_matches_keyword_without_words_never_matches(keyword):
+    assert not matches(tokenize("Product Manager"), keyword)
+    assert not matches([], keyword)
+
+
 def test_matches_whole_words_only():
     assert not matches(tokenize("Upgrade Specialist"), "grad")
     assert not matches(tokenize("Staffing Coordinator"), "staff")

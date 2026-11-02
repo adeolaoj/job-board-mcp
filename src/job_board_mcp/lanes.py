@@ -24,10 +24,11 @@ def tokenize(text: str) -> list[str]:
 
 def matches(title_tokens: list[str], keyword: str) -> bool:
     """True if the keyword's words appear next to each other, in order, in title_tokens."""
-    if not keyword:
-        return False
-    
     keyword_tokens = tokenize(keyword)
+
+    # A keyword with no words ("", "  ", "--") would otherwise match every title.
+    if not keyword_tokens:
+        return False
 
     for i in range(len(title_tokens) - len(keyword_tokens) + 1):
         window = title_tokens[i : i + len(keyword_tokens)]

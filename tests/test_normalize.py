@@ -94,6 +94,32 @@ def test_greenhouse_skips_job_without_url(greenhouse_raw):
     assert "8815241002" in warnings[0]  # the warning names the skipped job
 
 
+def test_greenhouse_skips_job_with_non_string_title(greenhouse_raw):
+    greenhouse_raw["jobs"][0]["title"] = 123
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert len(jobs) == 4
+    assert len(warnings) == 1
+
+
+def test_greenhouse_null_location_name_becomes_empty(greenhouse_raw):
+    greenhouse_raw["jobs"][0]["location"] = {"name": None}
+
+    jobs, _ = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert jobs[0].location == ""
+
+
+def test_greenhouse_skips_non_object_entries(greenhouse_raw):
+    greenhouse_raw["jobs"].append(None)
+
+    jobs, warnings = normalize_greenhouse(greenhouse_raw, "Addepar")
+
+    assert len(jobs) == 5
+    assert len(warnings) == 1
+
+
 def test_greenhouse_continues_without_location(greenhouse_raw):
     greenhouse_raw["jobs"][0]["location"] = None
 
@@ -257,11 +283,33 @@ def test_ashby_skips_unlisted_job(ashby_raw):
     assert warnings == []
 
 
+def test_ashby_skips_non_object_entries_and_non_string_titles(ashby_raw):
+    expected = len(normalize_ashby(ashby_raw, "Deepgram")[0])
+    ashby_raw["jobs"][0]["title"] = ["not", "a", "string"]
+    ashby_raw["jobs"].append("oops")
+
+    jobs, warnings = normalize_ashby(ashby_raw, "Deepgram")
+
+    assert len(jobs) == expected - 1
+    assert len(warnings) == 2
+
+
 ### Lever Normalization Tests ###
 @pytest.fixture
 def lever_raw():
     # Load fresh raw data from the fixture file for each test
     return json.loads((FIXTURES / "lever_jobs.json").read_text(encoding="utf-8"))
+
+
+def test_lever_skips_non_object_entries_and_non_string_titles(lever_raw):
+    expected = len(normalize_lever(lever_raw, "Zoox")[0])
+    lever_raw[0]["text"] = 42
+    lever_raw.append(None)
+
+    jobs, warnings = normalize_lever(lever_raw, "Zoox")
+
+    assert len(jobs) == expected - 1
+    assert len(warnings) == 2
 
 
 def test_lever_maps_fields(lever_raw):
