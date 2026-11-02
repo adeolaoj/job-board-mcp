@@ -11,6 +11,9 @@ from job_board_mcp.normalize import normalize_ashby, normalize_greenhouse, norma
 
 NORMALIZERS = {"greenhouse": normalize_greenhouse, "lever": normalize_lever, "ashby": normalize_ashby}
 
+# Also the bound on the search_jobs tool's limit parameter, so the SDK rejects bad values first.
+MAX_LIMIT = 100
+
 
 @dataclass(frozen=True)
 class SearchFilters:
@@ -23,8 +26,9 @@ class SearchFilters:
 
     def __post_init__(self):
         # A negative slice like jobs[:-1] would silently drop jobs instead of capping them.
-        if self.limit < 0:
-            raise ValueError(f"limit must be 0 or more, got {self.limit}")
+        # Above MAX_LIMIT, one search could return every job on every board (~2,400).
+        if not 0 <= self.limit <= MAX_LIMIT:
+            raise ValueError(f"limit must be between 0 and {MAX_LIMIT}, got {self.limit}")
         if self.posted_within_days is not None and self.posted_within_days < 0:
             raise ValueError(f"posted_within_days must be 0 or more, got {self.posted_within_days}")
 
@@ -57,7 +61,9 @@ def select_companies(
 
         company = by_name.get(key)
         if company is None:
-            errors.append(f"Unknown company: {name}")
+            # List the valid names, like check_lane does, so Claude can correct itself.
+            configured = ", ".join(company.name for company in all_companies)
+            errors.append(f"Unknown company: {name}. Configured companies: {configured}")
         else:
             selected.append(company)
     return selected, errors

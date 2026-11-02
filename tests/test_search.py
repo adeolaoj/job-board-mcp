@@ -7,7 +7,13 @@ import pytest
 from job_board_mcp.config import Company
 from job_board_mcp.fetch import FetchError
 from job_board_mcp.lanes import load_lanes
-from job_board_mcp.search import SearchFilters, build_search_response, check_lane, select_companies
+from job_board_mcp.search import (
+    MAX_LIMIT,
+    SearchFilters,
+    build_search_response,
+    check_lane,
+    select_companies,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 LANES_PATH = Path(__file__).parent.parent / "config" / "lanes.yaml"
@@ -204,6 +210,12 @@ def test_negative_numbers_are_rejected(field):
         SearchFilters(**{field: -1})
 
 
+def test_limit_above_max_is_rejected():
+    SearchFilters(limit=MAX_LIMIT)  # must not raise
+    with pytest.raises(ValueError, match="limit"):
+        SearchFilters(limit=MAX_LIMIT + 1)
+
+
 # --- Errors and warnings ---
 
 def test_failed_company_goes_in_errors_and_others_still_return(results, lanes):
@@ -311,6 +323,7 @@ def test_select_companies_reports_unknown_names_and_keeps_going():
     assert selected == [ZOOX]
     assert len(errors) == 1
     assert "Nope" in errors[0]
+    assert "Addepar" in errors[0] and "Zoox" in errors[0]  # lists the valid names
 
 
 def test_select_companies_none_means_all():

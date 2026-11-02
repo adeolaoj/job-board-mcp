@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from job-board-mcp!")
+"""Search official job board APIs from Claude. The entry point is job_board_mcp.server:main."""

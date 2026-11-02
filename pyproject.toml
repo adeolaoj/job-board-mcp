@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-job-board-mcp = "job_board_mcp:main"
+job-board-mcp = "job_board_mcp.server:main"
 
 [build-system]
 requires = ["uv_build>=0.10.8,<0.11.0"]
