@@ -236,7 +236,7 @@ def description_greenhouse(raw: dict) -> str:
 
 
 def description_lever(raw: dict) -> str:
-    """Return descriptionPlain, each list (heading plus bullets), then additionalPlain."""
+    """Return descriptionPlain, each list (heading plus bullets), additionalPlain, then salaryDescriptionPlain."""
     # descriptionPlain leaves out responsibilities and qualifications, which are only in lists[].
     sections = [(raw.get("descriptionPlain") or "").strip()]
     for section in raw.get("lists") or []:
@@ -246,6 +246,8 @@ def description_lever(raw: dict) -> str:
         body = html_to_text(section.get("content") or "")
         sections.append("\n".join(part for part in (heading, body) if part))
     sections.append((raw.get("additionalPlain") or "").strip())
+    # Pay is a separate field, missing on some postings (e.g. Zoox contract roles).
+    sections.append((raw.get("salaryDescriptionPlain") or "").strip())
 
     return "\n\n".join(section for section in sections if section)
 

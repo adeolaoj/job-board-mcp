@@ -470,6 +470,27 @@ def test_lever_description_without_lists(lever_detail):
     assert "About Zoox" in text
 
 
+def test_lever_description_ends_with_salary(lever_raw):
+    # The TPM detail fixture is a contract role with no salary field, so use a list
+    # entry: Lever's list includes the same description fields as the detail endpoint.
+    job = next(job for job in lever_raw if job["text"] == "Director, Corporate Security")
+
+    text = description_lever(job)
+
+    assert "Base Salary Range" in text
+    assert text.index("About Zoox") < text.index("Base Salary Range")
+    assert text.endswith(job["salaryDescriptionPlain"].strip())
+
+
+def test_lever_description_without_salary(lever_detail):
+    assert "salaryDescriptionPlain" not in lever_detail  # real data: the TPM is a contract role
+
+    text = description_lever(lever_detail)
+
+    assert "Base Salary Range" not in text
+    assert text.endswith(lever_detail["additionalPlain"].strip())
+
+
 def test_lever_description_missing_everything_is_empty():
     assert description_lever({}) == ""
 

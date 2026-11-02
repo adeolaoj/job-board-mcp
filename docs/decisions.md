@@ -58,6 +58,10 @@ JSON parser. Greenhouse's `&lt;` is HTML escaping inside the string, which we un
 `lists[].content` as HTML only, so `get_job` combines `descriptionPlain`, each list
 (heading plus text with tags removed), and `additionalPlain`.
 
+**Pay is in `salaryDescriptionPlain`, appended last.** It's a separate field from the rest
+of the description ("Base Salary Range ..."), present on 201 of 229 Zoox postings and
+missing on the contract TPM, so `get_job` adds it only when it's there.
+
 ## Ashby field mapping
 
 Verified against Deepgram on 2026-10-29: 200 OK, `{"jobs": [...], "apiVersion": "1"}`,
