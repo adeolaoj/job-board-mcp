@@ -1,9 +1,13 @@
+import asyncio
+
 import httpx
 import pytest
 
 from job_board_mcp.cache import TTLCache
 from job_board_mcp.config import Company
 from job_board_mcp.fetch import (
+    MAX_CONCURRENT_REQUESTS,
+    TIMEOUT_SECONDS,
     USER_AGENT,
     Fetcher,
     FetchError,
@@ -67,7 +71,7 @@ def test_unsupported_ats_raises_value_error():
 def test_client_sends_user_agent():
     client = make_client()
     assert client.headers["User-Agent"] == USER_AGENT
-    assert client.timeout.read == 10.0
+    assert client.timeout.read == TIMEOUT_SECONDS == 20.0
 
 
 # --- fetch_json ---
@@ -203,3 +207,23 @@ async def test_fetch_boards_keeps_order_and_isolates_failures():
     assert results[0] == {"jobs": ["addepar job"]}
     assert isinstance(results[1], FetchError)
     assert results[2] == {"jobs": ["deepgram job"]}
+
+
+@pytest.mark.anyio
+async def test_fetch_boards_caps_requests_in_flight():
+    in_flight = 0
+    most_in_flight = 0
+
+    async def handler(request):
+        nonlocal in_flight, most_in_flight
+        in_flight += 1
+        most_in_flight = max(most_in_flight, in_flight)
+        await asyncio.sleep(0.01)  # hold the request open so others pile up
+        in_flight -= 1
+        return httpx.Response(200, json={"jobs": []})
+
+    companies = [Company(name=f"Co{i}", ats="greenhouse", slug=f"co{i}") for i in range(20)]
+    results = await make_fetcher(handler).fetch_boards(companies)
+
+    assert results == [{"jobs": []}] * 20
+    assert most_in_flight == MAX_CONCURRENT_REQUESTS

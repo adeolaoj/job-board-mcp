@@ -243,5 +243,7 @@ async def _fetch_raw_job(fetcher: Fetcher, company: Company, job_id: str) -> dic
 def main() -> None:
     # logging writes to stderr. Never print(): with stdio, stdout carries the MCP messages.
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    # httpx logs every request at INFO (~22 per search), which would bury the posting warnings.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     mcp.run()

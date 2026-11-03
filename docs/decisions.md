@@ -7,6 +7,13 @@ based on a real API response, not documentation alone.
 
 **Official public job board APIs.** Greenhouse, Lever, and Ashby publish unauthenticated job board endpoints meant to be read. Request volume is kept
  low with a ~15 minute cache.
+
+**At most 8 boards are fetched at once, with a 20-second timeout.** Lever timed out during
+full searches (Zoox and Lucidworks landing in `errors`). Measured on 2026-11-02: Lever is
+the slowest ATS (~1s even for Lucidworks's 0.03 MB board, so the delay is Lever's side),
+and a full search downloads ~25 MB, mostly 2-4 MB Ashby boards competing for bandwidth.
+The 20s timeout (up from 10s) covers a slow Lever; the cap of 8 covers a slow connection
+and keeps request bursts small. The cap cost ~0.3s on a fast connection.
  **Company slugs must be checked, not guessed.**
 
 ## Greenhouse field mapping

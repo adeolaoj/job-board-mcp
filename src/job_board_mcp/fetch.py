@@ -10,6 +10,10 @@ from job_board_mcp.config import Company
 
 USER_AGENT = "job-board-mcp/0.1 (+https://github.com/adeolaoj/job-board-mcp)"
 CACHE_TTL_SECONDS = 15 * 60
+# Lever answers slowest (~1s even for tiny boards), and a full search downloads ~25 MB, so
+# allow 20s per network step and fetch at most 8 boards at once instead of all of them.
+TIMEOUT_SECONDS = 20.0
+MAX_CONCURRENT_REQUESTS = 8
 _CACHE_MISS = object()
 
 
@@ -18,8 +22,8 @@ class FetchError(Exception):
 
 
 def make_client() -> httpx.AsyncClient:
-    """Create an HTTP client with standard headers and a 10-second request timeout."""
-    return httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=10.0)
+    """Create an HTTP client with standard headers and a TIMEOUT_SECONDS request timeout."""
+    return httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT_SECONDS)
 
 
 def list_url(company: Company) -> str:
@@ -83,12 +87,17 @@ class Fetcher:
     
 
     async def fetch_boards(self, companies: list[Company]) -> list[Any | Exception]:
-        """Fetch every company's list URL concurrently. Failures come back as exceptions, in order."""
+        """Fetch every company's list URL, at most MAX_CONCURRENT_REQUESTS at a time.
+
+        Failures come back as exceptions, in order.
+        """
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
         async def fetch_one(company: Company) -> Any | Exception:
-            try:
-                return await self.fetch_json(list_url(company))
-            except FetchError as exc:
-                return exc
+            async with semaphore:
+                try:
+                    return await self.fetch_json(list_url(company))
+                except FetchError as exc:
+                    return exc
         
         return await asyncio.gather(*(fetch_one(company) for company in companies))
