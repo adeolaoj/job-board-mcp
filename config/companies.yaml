@@ -60,10 +60,6 @@
   ats: ashby
   slug: ramp
 
-- name: Vercel
-  ats: ashby
-  slug: vercel
-
 - name: Linear
   ats: ashby
   slug: linear
