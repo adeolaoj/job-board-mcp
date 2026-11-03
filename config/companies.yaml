@@ -83,3 +83,79 @@
 - name: Flip
   ats: greenhouse
   slug: flip
+
+- name: Notion
+  ats: ashby
+  slug: notion
+
+- name: Cognition
+  ats: ashby
+  slug: cognition
+
+- name: Databricks
+  ats: greenhouse
+  slug: databricks
+
+- name: Glean
+  ats: greenhouse
+  slug: gleanwork
+
+- name: Scale AI
+  ats: greenhouse
+  slug: scaleai
+
+- name: Rogo
+  ats: ashby
+  slug: rogo
+
+- name: Samsara
+  ats: greenhouse
+  slug: samsara
+
+- name: ElevenLabs
+  ats: ashby
+  slug: elevenlabs
+
+- name: Cursor
+  ats: ashby
+  slug: cursor
+
+- name: Brex
+  ats: greenhouse
+  slug: brex
+
+- name: Figma
+  ats: greenhouse
+  slug: figma
+
+- name: Harvey
+  ats: ashby
+  slug: harvey
+
+- name: Plaid
+  ats: ashby
+  slug: plaid
+
+- name: Mercor
+  ats: ashby
+  slug: mercor
+
+- name: Perplexity
+  ats: ashby
+  slug: perplexity
+
+- name: Clay
+  ats: ashby
+  slug: claylabs
+
+- name: Baseten
+  ats: ashby
+  slug: baseten
+
+- name: Together AI
+  ats: greenhouse
+  slug: togetherai
+
+- name: Fireworks
+  ats: ashby
+  slug: fireworks
